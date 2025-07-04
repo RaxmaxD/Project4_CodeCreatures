@@ -132,12 +132,14 @@ public:
 
 		//Info command
 		void info(){
-			cout << "Name: " << this->getName() << endl;
-			//cout << "HP: " << this->getHP() << "/" << this->getMaxHP() << endl;
-			//cout << "Current XP: " << this->getXP() <<endl ;
+			cout << "=== " << this->getName() << " Info ===" << endl;
+			cout << "Type: " << this->getType() << endl;
+			cout << "HP: " << this->getHP() << "/" << this->getMaxHP() << endl;
+			cout << "Memory: " << this->getMem() << "/" << memMax << endl;
 			cout << "ATK: " << this->getATK() << endl;
 			cout << "DEF: " << this->getDEF() << endl;
 			cout << "SPD: " << this->getSPD() << endl;
+			cout << "Level: " << this->getLVL() << endl;
 		}
 
 		//every turn the player will gain some memory,
@@ -203,7 +205,7 @@ public:
 	    	//check to make sure the damage taken isn't less than the defense,
 	    	//else the defending creature still takes 1 damage
 	    	if(damage*mult > this->getDEF()){
-	        HP -= damage*mult + (this->getDEF());
+	        HP -= damage*mult - (this->getDEF());
 
 	    	}else{
 	    		cout << this->getName() << "'s defense is really high!\n";
@@ -245,6 +247,9 @@ public:
 	    void resetHP(){
 	        HP = maxHP;
 	    }
+
+	    // Virtual destructor for proper polymorphic deletion
+	    virtual ~Creature() = default;
 
 }; // end main creature class
 
@@ -534,6 +539,9 @@ int main() {
 
 	battleMode(partner,enemy);
 
+	// Clean up dynamically allocated memory
+	delete partner;
+	delete enemy;
 
 	//}while();
 
@@ -609,7 +617,7 @@ void battleMode(Creature *partner, Creature *enemy){
         	enemy->attack(partner);
 
         }else{
-        	enemy->attack(partner); // Enemy attacks partner
+            enemy->attack(partner); // Enemy attacks partner
         }
         // Check if partner is defeated after enemy's attack
         if(partner->getHP() <= 0){
