@@ -10,13 +10,14 @@
 #include <iostream>
 #include <cstring>
 #include <string>
+#include <cstdlib>
+#include <ctime>
 using namespace std;
 
 
 //function prototypes
 bool checkYesOrNo();
 
-void battleMode();
 
 //Main class prototype
 class Creature{
@@ -37,6 +38,8 @@ public:
 	float DEF = 1;
 	float SPD = 1;
 	float xpReward = 20;
+	float lvlUpMin = 30;
+	float statBoostMult = 1.5;
 
 	string looks = "**************************************@@************************************************************"
 					"**********************************#@@@@@@@###################@@@@@@@@*******************************"
@@ -130,14 +133,43 @@ public:
 			this->name = newName;
 		}
 
+		//if this creature has enough XP it levels up.
+		void levelUp(){
+			if(this->getXP() > lvlUpMin){
+				this->LVL += 1;
+				this->lvlUpMin *= statBoostMult;
+				this->maxHP *= statBoostMult;
+				this->resetHP();
+				this->ATK *= statBoostMult;
+				this->DEF *= statBoostMult;
+				this->SPD *= statBoostMult;
+
+			}else{
+				//do nothing
+			}
+		}
+
 		//Info command
 		void info(){
+			//display basic info
 			cout << "Name: " << this->getName() << endl;
-			cout << "HP: " << this->getHP() << "/" << this->getMaxHP << endl;
-			cout << "Current XP: " << this->getXP <<endl ;
+			cout << "HP: " << this->getHP() << "/" << this->getMaxHP() << endl;
+			cout << "Level: " << this->getLVL() << endl;
+			cout << "Type: " << this->getType() << endl;
+			cout << "Current XP: " << this->getXP() <<endl ;
 			cout << "ATK: " << this->getATK() << endl;
 			cout << "DEF: " << this->getDEF() << endl;
 			cout << "SPD: " << this->getSPD() << endl;
+
+			this->getAttacks();
+
+		}
+		//here as a virtual function
+		virtual void getAttacks(){
+			cout << "Basic attack: mult: 2, memory: 10" << endl;
+		}
+		virtual void doAttacks(Creature* defender){
+			cout << "what,, what is this thing??\n";
 		}
 
 		//every turn the player will gain some memory,
@@ -221,7 +253,7 @@ public:
 	    // Attack function for basic attacks
 	    void attack(Creature *defender){
 	    	//cost of this basic attack
-	    	int memCost = 30;
+	    	int memCost = 10;
 
 	    	if(payMemory(memCost)){
 
@@ -234,7 +266,7 @@ public:
 
 	    	}//end if statement
 	    }
-	    void blockeddAttack(Creature *defender){
+	    void blockedAttack(Creature *defender){
 	        cout << this->name << " attacks " << defender->getName() << "!" << endl; // Use getName()
 	        float damage = this->ATK; // Calculate damage
 
@@ -291,38 +323,103 @@ public:
 				"Stomp: mult: 5, memory: 50\n"
 				"Headbutt: mult 7, memory: 70\n"
 				"Emit: creates fog in the arena, memory: 80\n";
+		cout << endl;
 
 	}
+
+	//we call this in the main on a creature to check for its individual attacks instead
+	//of painstakingly checking for every condition, have each creature check for its own.
+	void doAttacks(Creature* defender) override{
+
+		cout << "Enter in one of " << this->getName() << "' special attacks:\n"
+				"use format:" << this->getName() << "->[attack name]->" << defender->getName() << endl;
+
+		string action;
+		cin >> action;
+
+		if(action == "partner->Info()" || action == (this->getName()).append("->Info()")){
+		        	this->info();
+
+		        	//let user re-enter action
+		        	cout << "continue to enter attack:\n";
+		        	cin >> action;
+		        }else if(action == "enemy->Info()" || action == (defender->getName()).append("->Info()")){
+		        	defender->info();
+
+		        	//let user re-enter action
+		        	cout << "continue to enter attack:\n";
+		        	cin >> action;
+		        }else{
+		        	//do nothing
+				}
+
+
+		if(action == ((this->getName()).append("->Bite->")).append(defender->getName())){
+			this->bite(defender);
+
+		}else if(action == ((this->getName()).append("->Stomp->")).append(defender->getName())){
+				this->stomp(defender);
+		}else if(action == ((this->getName()).append("->Headbutt->")).append(defender->getName())){
+				this->headbutt(defender);
+		}else if(action == ((this->getName()).append("->Emitt->")).append(defender->getName())){
+			this->emitt(defender);
+		}else{
+			cout << "Invalid syntax!! "<< this->getName() << " coulnd't understand your command!" << endl;
+		}
+	}
+
 	void bite(Creature *defender){
-        cout << this->getName() << " attacks " << defender->getName() << "!" << endl;
-        // Calculate damage
-        float damage = 2 * this->ATK;
+		int memCost = 30;
 
-        // Apply damage to the defender directly using takeDamage function
-        defender->takeDamage(this,damage);
+		if(payMemory(memCost)){
 
-	};
+			cout << this->getName() << " bites " << defender->getName() << "!" << endl;
+			// Calculate damage
+			float damage = 3 * this->ATK;
 
-	void stomp(){
-
-	};
-
-	void headbutt(){
+			// Apply damage to the defender directly using takeDamage function
+			defender->takeDamage(this,damage);
+		}
 
 	};
 
-	void emitt(){
+	void stomp(Creature *defender){
+		int memCost = 50;
+
+		if(payMemory(memCost)){
+			cout << this->getName() << " attacks " << defender->getName() << "!" << endl;
+			// Calculate damage
+			float damage = 5 * this->ATK;
+			// Apply damage to the defender directly using takeDamage function
+			defender->takeDamage(this,damage);
+		}//end if staatement
+
+	};
+
+	void headbutt(Creature *defender){
+		int memCost = 70;
+
+		if(payMemory(memCost)){
+			cout << this->getName() << " attacks " << defender->getName() << "!" << endl;
+			// Calculate damage
+			float damage = 7 * this->ATK;
+			// Apply damage to the defender directly using takeDamage function
+			defender->takeDamage(this,damage);
+		}//end if statement to check that we have enough memory
+
+	};
+
+	void emitt(Creature *defender){
 		//when Megalos enters the field, he emits enough mist to create a dense fog,
-				//enemies become disoriented,
+		//enemies become disoriented,
+
+		//No ide how to implement this yet
+		int memCost = 70;
+
+		if(payMemory(memCost)){}
+
 	};
 
-private:
-	//might remove this--------------
-	//void fog(){
-
-		//when Megalos enters the field, he emits enough mist to create a dense fog,
-				//enemies become disoriented,
-	//}
 };
 
 class Brachios : public Creature{
@@ -374,29 +471,101 @@ public:
 	void getAttacks(){
 
 		cout << "Attacks:\n"
+				"roar: mult: 3, memory: 30\n"
 				"Stomp: mult: 5, memory: 50\n"
 				"Headbutt: mult 7, memory: 70\n"
-				"Tailwhip"
-				"Emit: creates fog in the arena, memory: 80\n";
+				"TailWhip: lower enemy defense for 3 turns, memory: 40\n";
 
 	}
 
-	//Hmm, ig since they inheret from creature this might need to be different
-	//or replace 'Creature' here \/ with  generic type?
-	void stomp(Creature attacker,Creature defender){
+	//we call this in the main on a creature to check for its individual attacks instead
+		//of painstakingly checking for every condition, have each creature check for its own.
+		void doAttacks(Creature* defender){
+
+			cout << "Enter in one of " << this->getName() << "' special attacks:\n"
+							"use format:" << this->getName() << "->[attack name]->" << defender->getName() << endl;
+
+					string action;
+					cin >> action;
+
+					if(action == "partner->Info()" || action == (this->getName()).append("->Info()")){
+					        	this->info();
+
+					        	//let user re-enter action
+					        	cout << "continue to enter attack:\n";
+					        	cin >> action;
+					        }else if(action == "enemy->Info()" || action == (defender->getName()).append("->Info()")){
+					        	defender->info();
+
+					        	//let user re-enter action
+					        	cout << "continue to enter attack:\n";
+					        	cin >> action;
+					        }else{
+					        	//do nothing
+							}
+
+			if(action == ((this->getName()).append("->Roar->")).append(defender->getName())){
+				this->roar(defender);
+
+			}else if(action == ((this->getName()).append("->Stomp->")).append(defender->getName())){
+					this->stomp(defender);
+			}else if(action == ((this->getName()).append("->Headbutt->")).append(defender->getName())){
+					this->headbutt(defender);
+			}else if(action == ((this->getName()).append("->TailWhip->")).append(defender->getName())){
+				this->tailWhip(defender);
+			}else{
+				cout << "Invalid syntax!! "<< this->getName() << " coulnd't understand your command!" << endl;
+			}
+		}
+
+
+	void roar(Creature* defender){
+		int memCost = 30;
+
+		if(payMemory(memCost)){
+
+			cout << this->getName() << " bites " << defender->getName() << "!" << endl;
+			// Calculate damage
+			float damage = 3 * this->ATK;
+
+			// Apply damage to the defender directly using takeDamage function
+			defender->takeDamage(this,damage);
+		}
 
 	};
 
-	void headbutt(){
+	void stomp(Creature *defender){
+			int memCost = 50;
+
+			if(payMemory(memCost)){
+				cout << this->getName() << " attacks " << defender->getName() << "!" << endl;
+				// Calculate damage
+				float damage = 5 * this->ATK;
+				// Apply damage to the defender directly using takeDamage function
+				defender->takeDamage(this,damage);
+			}//end if staatement
 
 	};
 
-	void tailWhip(){
+	void headbutt(Creature *defender){
+		int memCost = 70;
+
+		if(payMemory(memCost)){
+			cout << this->getName() << " attacks " << defender->getName() << "!" << endl;
+			// Calculate damage
+			float damage = 7 * this->ATK;
+			// Apply damage to the defender directly using takeDamage function
+			defender->takeDamage(this,damage);
+		}//end if statement to check that we have enough memory
 
 	};
-	void roar(){
 
+	void tailWhip(Creature* defender){
+		//No ide how to implement this yet
+		int memCost = 70;
+		if(payMemory(memCost)){}
 	};
+
 
 private:
 
@@ -430,12 +599,115 @@ public:
 "========================+++++++++++++++++++++++++++++++++++++++++++++++++%+#%*%*%##**************\n"){};
 
 
+
+	void getAttacks(){
+
+			cout << "Attacks:\n"
+					"roar: mult: 3, memory: 30\n"
+					"Stomp: mult: 5, memory: 50\n"
+					"Headbutt: mult 7, memory: 70\n"
+					"TailWhip: lower enemy defense for 3 turns, memory: 40\n";
+
+		}
+
+		//we call this in the main on a creature to check for its individual attacks instead
+			//of painstakingly checking for every condition, have each creature check for its own.
+			void doAttacks(Creature* defender){
+
+				cout << "Enter in one of " << this->getName() << "' special attacks:\n"
+								"use format:" << this->getName() << "->[attack name]->" << defender->getName() << endl;
+
+						string action;
+						cin >> action;
+
+						if(action == "partner->Info()" || action == (this->getName()).append("->Info()")){
+						        	this->info();
+
+						        	//let user re-enter action
+						        	cout << "continue to enter attack:\n";
+						        	cin >> action;
+						        }else if(action == "enemy->Info()" || action == (defender->getName()).append("->Info()")){
+						        	defender->info();
+
+						        	//let user re-enter action
+						        	cout << "continue to enter attack:\n";
+						        	cin >> action;
+						        }else{
+						        	//do nothing
+								}
+
+				if(action == ((this->getName()).append("->Roar->")).append(defender->getName())){
+					this->roar(defender);
+
+				}else if(action == ((this->getName()).append("->Stomp->")).append(defender->getName())){
+						this->stomp(defender);
+
+				}else if(action == ((this->getName()).append("->Headbutt->")).append(defender->getName())){
+						this->headbutt(defender);
+
+				}else if(action == ((this->getName()).append("->TailWhip->")).append(defender->getName())){
+					this->tailWhip(defender);
+
+				}else{
+					cout << "Invalid syntax!! "<< this->getName() << " coulnd't understand your command!" << endl;
+				}
+			}
+
+
+		void roar(Creature* defender){
+			int memCost = 30;
+
+			if(payMemory(memCost)){
+
+				cout << this->getName() << " bites " << defender->getName() << "!" << endl;
+				// Calculate damage
+				float damage = 3 * this->ATK;
+
+				// Apply damage to the defender directly using takeDamage function
+				defender->takeDamage(this,damage);
+			}
+
+		};
+
+		void stomp(Creature *defender){
+				int memCost = 50;
+
+				if(payMemory(memCost)){
+					cout << this->getName() << " attacks " << defender->getName() << "!" << endl;
+					// Calculate damage
+					float damage = 5 * this->ATK;
+					// Apply damage to the defender directly using takeDamage function
+					defender->takeDamage(this,damage);
+				}//end if staatement
+
+		};
+
+		void headbutt(Creature *defender){
+			int memCost = 70;
+
+			if(payMemory(memCost)){
+				cout << this->getName() << " attacks " << defender->getName() << "!" << endl;
+				// Calculate damage
+				float damage = 7 * this->ATK;
+				// Apply damage to the defender directly using takeDamage function
+				defender->takeDamage(this,damage);
+			}//end if statement to check that we have enough memory
+
+		};
+
+		void tailWhip(Creature* defender){
+			//No ide how to implement this yet
+			int memCost = 70;
+			if(payMemory(memCost)){}
+		};
+
 };// end of tryos class
 
 
 
 //Creature *partner, Creature *enemy
 void battleMode(Creature *partner, Creature *enemy);
+void exploreTime(Creature *partner, Creature *enemy);
 
 int main() {
 
@@ -447,16 +719,7 @@ int main() {
 	string chosenCreature;
 	Creature *partner;
 
-	//maybe?? battle input will work like:
-	//switch(){
-	//case attack:
-	//case drink:
 
-	//dunno, this might be too combersome
-	// I want input to look more like:
-	//attack(Allo,Stego)
-	//for 'Allo' to attack 'Stego'
-	//but idk if input can work like that
 
 	cout << "Hello! welcome to the first prototype of [CODE CREATURES](temp name)" << endl;
 	cout << "Please choose your partner!"<< endl;
@@ -526,14 +789,65 @@ int main() {
 
 	cout << endl << "Now your journey can begin! let's start by-- wait, we aren't ready yet!!" << endl;
 
-	//Create new creature for the purpose of new battle
-	Creature *enemy = new Brachios();
-	if(partner->getName() == enemy->getName()){
-		enemy->setName(enemy->getName() +"B");
-	}
+
+
+	string direction="";
+	Creature *enemy = nullptr;
+
+	//prompt player to  begin adventure, see where they wanna go,
+	//doesn't actuaally matter but the game repets what you say, lol
+	cout << "It's time for us to begin!\nWhich direction would you like to go?\n";cin >> direction;
+	cout << "Alright! lets go " << direction << "!" << endl;
+
+
+	do{
+
+
+
+
+	//generate a random enemy creature from one of three types
+	string consumeAction = "";
+	int randomNum = rand() % 3 +1;
+	switch(randomNum){
+		case 1:
+			//this case never happens
+			break;
+		case 2:
+			//Create new creature for the purpose of new battle
+			enemy = new Brachios();
+				if(partner->getName() == enemy->getName()){
+				enemy->setName(enemy->getName() +"B");
+			}
+			break;
+		case 3:
+			//Create new creature for the purpose of new battle
+			enemy = new Tryos();
+				if(partner->getName() == enemy->getName()){
+				enemy->setName(enemy->getName() +"B");
+			}
+			break;
+		case 4:
+			//Create new creature for the purpose of new battle
+			enemy = new Tryos();
+			if(partner->getName() == enemy->getName()){
+				enemy->setName(enemy->getName() +"B");
+			}
+			break;
+	}//end of swicth statement
+
+
+	exploreTime(partner,enemy);
 
 	battleMode(partner,enemy);
 
+
+	//ending of the main loop, allow user to say where they'd like to go next
+	cout << "Which direction would you like to go?\n";
+	cin >> direction;
+	cout << "Alright! lets go " << direction << "!" << endl;
+
+	}while(direction != "null" && direction != "" && direction != "home" && direction != "quit"
+			&& direction != "Home" && direction != "Quit");
 
 	//}while();
 
@@ -542,6 +856,52 @@ int main() {
 }//END OF MAIN
 
 //FUNCTIONS
+void exploreTime(Creature *partner, Creature *enemy){
+
+
+	//randomly decide what the player encounters
+	string consumeAction = "";
+	int randomNum = rand() % 3 +1;
+
+	switch(randomNum){
+		case 1:
+			cout << "seems like there's nothing here...\n";
+			break;
+		case 2:
+			cout << "You've found a data tree, would you like to have " << partner->getName() << " eat from the tree?\n";
+			cout << "you can tell " << partner->getName() << " where the tree is to eat by using: [Partner].eat([item])\n";
+					cin >> consumeAction;
+
+
+					if(consumeAction == (partner->getName()).append(".eat(tree)")){
+						cout << partner->getName() << " is eating data! Its health is restored\n";
+						partner->resetHP();
+					}else if (consumeAction == (partner->getName()).append(".drink(tree)")){
+						cout << partner->getName() << " can't drink a tree...\n";
+					}else{
+						cout << partner->getName() << " didn't understand your command...\n";
+					}
+			break;
+		case 3:
+			cout << "You've come across a cooling air stream, should " << partner->getName() << " drink from the stream?\n";
+			cout << "you can tell " << partner->getName() << " where the stream is to drink by using: [Partner].drink([item])\n";
+					cin >> consumeAction;
+					if(consumeAction == (partner->getName()).append(".drink(stream)")){
+							cout << partner->getName() << " is drinking to cool off! Its health is restored\n";
+							partner->resetHP();
+
+					}else if (consumeAction == (partner->getName()).append(".eat(tree)")){
+						cout << partner->getName() << " can't eat air streams...\n";
+					}else{
+						cout << partner->getName() << " didn't understand your command...\n";
+					}
+			break;
+	}//end switch case
+
+	//end of function
+	cout << "Now leaving this area\n\n";
+
+}
 
 //battle mode from internet:
 void battleMode(Creature *partner, Creature *enemy){
@@ -565,37 +925,39 @@ void battleMode(Creature *partner, Creature *enemy){
     do{
 
         cout << endl << "Would you like to: Attack, Block, or Flee?\n";
-        cout << "Enter in your choice in format: (Partner's name)->(action)->(Enemy's Name)\n";
-		cout << "Example: " << partner->getName() << "->Block->" << enemy->getName() << endl;
-		cout << "(You can use the \"Info\" action to learn about your partner's actions!)\n";
+        cout << "(You can use the \"Info\" command to learn about a creature and it's actions!) format: [CreatureName]->Info() \n";
         cout << endl <<"Make your move:" << endl;
 
         cin >> action;
 
-        if(action == "Info"){
-        	partner->getAttacks();
+        if(action == "partner->Info()" || action == (partner->getName()).append("->Info()")){
+        	partner->info();
 
-        }
+        }else if(action == "enemy->Info()" || action == (enemy->getName()).append("->Info()")){
+        	enemy->info();
+        }else{
 
         //If-else statement for battle actions
         //currently we only have attack, drink, and run, but soon
         //I'll change it so the attack option lets the player choose which of the creature's attack to use
-        if(action == ((partner->getName()).append("->Attack->")).append(enemy->getName())){
+        if(action == "Attack"){
 
-        	partner->attack(enemy); // Pass the enemy pointer directly
+        	cout << "What attack will " << partner->getName() << "use?\n";
+        	partner->doAttacks(enemy);
 
-        } else if (action == ((partner->getName()).append("->Block->")).append(enemy->getName())){ // Example of another action
+        }else if (action == "Block"){ // Example of another action
             cout << "Your partner" << partner->getName()  << " is blocking!" << endl;
 
-        } else if (action == ((partner->getName()).append("->Flee->")).append(enemy->getName())){ // Example of another action
+        } else if (action == "Flee"){ // Example of another action
             cout << "You and " << partner->getName() << " try to flee!" << endl;
             break; // Exit loop if player runs
 
-        } else {
-            cout << "Invalid action. Please choose Attack, Drink, or Run." << endl;
-            continue; // Skip the rest of the loop and ask for input again
+        } else{
+            cout << "Invalid action. Please choose Attack, block, or flee." << endl;
+            //skip the rest of the loop
+            continue;
 
-        }
+        }}
 
         // Check if enemy is defeated after partner's attack
         if(enemy->getHP() <= 0){
@@ -605,8 +967,8 @@ void battleMode(Creature *partner, Creature *enemy){
 
         // Enemy's turn (simple auto-attack)
         cout << endl << enemy->getName() << "'s turn!" << endl;
-        if(action == ((partner->getName()).append("->Block->")).append(enemy->getName())){
-        	enemy->attack(partner);
+        if(action == "Block"){
+        	enemy->blockedAttack(partner);
 
         }else{
         	enemy->attack(partner); // Enemy attacks partner
